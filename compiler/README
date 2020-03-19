@@ -1,0 +1,15 @@
+How to compile?
+
+Type make inside TM_DAE/compiler.
+Make sure your firewall allows to download from GitHub. 
+The project will download:
+	1. LLVM 3.8
+	2. CALNG
+	3. TOOLS 
+	4. TM_DAE
+	5. SVF-1-3
+If all the SW requirements are met, the project should build itself. 
+Have fun!
+
+Please note, that this is a preliminary version only. 
+It contains many bugs and horrible code style. 

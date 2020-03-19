@@ -9,10 +9,13 @@ COMPILER_DIR=$(shell pwd)
 BUILD_DIR=$(COMPILER_DIR)/build
 
 LLVM_DIR=$(COMPILER_DIR)/llvm
+SVF_DIR=$(COMPILER_DIR)/SVF-project/SVF
+SVF_PROJECT_DIR=$(COMPILER_DIR)/SVF-project
+SVF_BUILD_DIR=$(SVF_DIR)/build
 LLVM_BUILD_DIR=$(BUILD_DIR)/llvm-build
 LLVM_BIN_DIR=$(LLVM_BUILD_DIR)/bin
 LLVM_BUILD_MAKEFILE=$(LLVM_BUILD_DIR)/Makefile
-LLVM_CMAKE_PATH=$(LLVM_BUILD_DIR)/share/llvm/cmake/
+LLVM_CMAKE_PATH=$(LLVM_BUILD_DIR)/lib/cmake/llvm/
 
 BUILD_TYPE?=MinSizeRel
 
@@ -42,6 +45,9 @@ COMPILER_RT_REPOSITORY=http://llvm.org/git/compiler-rt.git
 OMP=$(LLVM_PROJECTS)/openmp
 OMP_REPOSITORY=https://github.com/llvm-mirror/openmp.git
 
+SVF_REPOSITORY=https://github.com/SVF-tools/SVF
+SVF_TAGS=v1.3
+SVF=$(SVF_DIR)
 TOOL_RELEASE=release_38
 TARGETS_TO_BUILD=X86
 #TARGETS_TO_BUILD="X86;ARM"
@@ -59,7 +65,7 @@ PROJECTS_BUILD_MAKEFILE=$(PROJECTS_BUILD_DIR)/Makefile
 #------------------------------------------------------------------------------
 #
 
-all: $(PROJECTS_BUILD_MAKEFILE) 
+all: $(PROJECTS_BUILD_MAKEFILE)
 	$(MAKE) -C $(PROJECTS_BUILD_DIR)
 
 $(LLVM_BIN_DIR): $(LLVM_BUILD_MAKEFILE)
@@ -110,8 +116,12 @@ else
 	cd $(OMP); git checkout $(TOOL_RELEASE);
 endif
 
+$(SVF):
+	mkdir $(SVF_PROJECT_DIR); cd $(SVF_PROJECT_DIR); git clone -b $(SVF_TAGS) $(SVF_REPOSITORY);
+	mkdir $(SVF_BUILD_DIR); cd $(SVF_BUILD_DIR); export LLVM_HOME=$(LLVM_BIN_DIR); export LLVM_DIR=$$LLVM_HOME; export PATH=$$LLVM_DIR:$$PATH; cmake $(SVF_DIR); make -j4;
 
-$(PROJECTS_BUILD_MAKEFILE): $(LLVM_BIN_DIR)
+
+$(PROJECTS_BUILD_MAKEFILE): $(LLVM_BIN_DIR) $(SVF)
 	mkdir -p $(PROJECTS_BUILD_DIR)
 	cd $(PROJECTS_BUILD_DIR); cmake -DLLVM_DIR:STRING=$(LLVM_CMAKE_PATH) -D CMAKE_BUILD_TYPE=$(BUILD_TYPE) -DLLVM_TARGETS_TO_BUILD=$(TARGETS_TO_BUILD) $(PROJECTS_DIR);
 clean:

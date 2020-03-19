@@ -4,7 +4,8 @@
 #==============================================================================#
 # Build directory
 build
-
+sources
+llvm
 #==============================================================================#
 # File extensions to be ignored anywhere in the tree.
 #==============================================================================#
@@ -17,6 +18,17 @@ build
 *.pyc
 # vim swap files
 .*.swp
+.*.swg
+.*.swo
+.*.swd
+.*.swf
+.*.swh
+.*.swi
+.*.swj
+.*.swk
+.*.swl
+.*.swm
+.*.swn
 .sw?
 #OS X specific files.
 .DS_store

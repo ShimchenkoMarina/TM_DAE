@@ -28,7 +28,7 @@ using namespace llvm;
 using namespace std;
 
 /* Intrinsics.gen*/
-#define PREFETCH_ID 1610
+#define PREFETCH_ID 3856
 
 namespace {
 struct RemoveRedundantPref : public FunctionPass {
@@ -41,6 +41,19 @@ struct RemoveRedundantPref : public FunctionPass {
   virtual bool runOnFunction(Function &F) {
 
     std::set<Value *> prefTargets;
+    for (inst_iterator I = inst_begin(&F), E = inst_end(&F); I != E; ++I) {
+	if (LoadInst *LI = dyn_cast<LoadInst>(&(*I)))
+	{
+		Value * target = LI->getPointerOperand();
+                prefTargets.insert(target);
+		//outs() << "target: " << *target << "\n";
+		if (!isa<Instruction>(target))
+		{
+			target = target->stripPointerCasts();
+                	prefTargets.insert(target);
+		}
+	}
+    }
     std::vector<Instruction *> toBeRemoved;
     for (inst_iterator I = inst_begin(&F), E = inst_end(&F); I != E; ++I) {
       // prefetch instructions
@@ -48,13 +61,20 @@ struct RemoveRedundantPref : public FunctionPass {
         CallInst *ci = dyn_cast<CallInst>(&(*I));
         if (isa<IntrinsicInst>(ci)) {
           IntrinsicInst *intr = dyn_cast<IntrinsicInst>(ci);
+	  //outs() << "IntrInstruction: " << *intr << " with ID: " << intr->getIntrinsicID()<< "\n";
+		
           if (intr->getIntrinsicID() == PREFETCH_ID) {
-            Value *target = ci->getArgOperand(0);
+	  //outs() << "PrefInstruction: " << *intr << "\n";
+            Value *bitcast = ci->getArgOperand(0);
+	    Value *target = (cast<Instruction>(bitcast))->getOperand(0);
+	    //outs() << "target: " << *target << "\n";
             if (prefTargets.find(target) != prefTargets.end()) {
-              // already prefetched
+              // already prefetched or loaded
+              //outs() << "Remove: " << *target << "\n";
               toBeRemoved.push_back(ci);
             } else {
               // first time prefetched
+              //outs() << "Stay: " << *target << "\n";
               prefTargets.insert(target);
             }
           }
